@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Terminal Helper</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Terminal commands for your exact setup, and a board to pin the ones worth keeping.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script>
+    // Apply the saved theme before the first paint so dark mode never flashes white.
+    try {
+      var theme = JSON.parse(localStorage.getItem('th.settings') || '{}').theme;
+      if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+    } catch (e) {}
+  </script>
+  <style>
+    html { color-scheme: light dark; background: light-dark(#fff, #191919); }
+    html[data-theme='light'] { color-scheme: light; }
+    html[data-theme='dark'] { color-scheme: dark; }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

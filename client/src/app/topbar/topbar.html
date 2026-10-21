@@ -1,0 +1,73 @@
+<div class="brand">
+  <span class="logo"><app-icon name="terminal" [size]="13" /></span>
+  <span class="name">Terminal Helper</span>
+  <span class="count">{{ board.notes().length }} {{ board.notes().length === 1 ? 'note' : 'notes' }}</span>
+</div>
+
+<label class="search">
+  <app-icon name="search" [size]="14" />
+  <input
+    #filter
+    type="search"
+    placeholder="Filter notes"
+    aria-label="Filter notes"
+    autocomplete="off"
+    spellcheck="false"
+    [value]="board.query()"
+    (input)="board.query.set(filter.value)"
+    (keydown.escape)="clearFilter(filter)"
+  />
+  @if (!board.query()) {
+    <kbd>{{ mod }} K</kbd>
+  }
+</label>
+
+<button class="btn" type="button" title="New note" (click)="newNote()">
+  <app-icon name="plus" />
+  <span class="wide-only">New</span>
+</button>
+
+<div class="menu-anchor" #menuAnchor>
+  <button
+    class="icon-btn"
+    type="button"
+    aria-label="More"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="menuOpen.set(!menuOpen())"
+  >
+    <app-icon name="more" />
+  </button>
+  @if (menuOpen()) {
+    <div class="menu" role="menu">
+      <button class="menu-item" type="button" role="menuitem" (click)="exportBoard()">
+        <app-icon name="download" /> Export board
+      </button>
+      <button class="menu-item" type="button" role="menuitem" (click)="importBoard()">
+        <app-icon name="upload" /> Import board…
+      </button>
+      <div class="menu-sep"></div>
+      <div class="menu-label">Theme</div>
+      @for (theme of themes; track theme.id) {
+        <button
+          class="menu-item"
+          type="button"
+          role="menuitemradio"
+          [attr.aria-checked]="settings.theme() === theme.id"
+          (click)="settings.theme.set(theme.id)"
+        >
+          <app-icon [name]="theme.icon" /> {{ theme.label }}
+          @if (settings.theme() === theme.id) {
+            <app-icon class="trail" name="check" />
+          }
+        </button>
+      }
+      <div class="menu-sep"></div>
+      <div class="menu-label">Shortcuts</div>
+      <div class="menu-hint"><span>Ask a question</span><kbd>/</kbd></div>
+      <div class="menu-hint"><span>Filter notes</span><kbd>{{ mod }} K</kbd></div>
+      <div class="menu-hint"><span>Stop the answer</span><kbd>Esc</kbd></div>
+      <div class="menu-hint"><span>New line</span><kbd>Shift Enter</kbd></div>
+    </div>
+  }
+</div>

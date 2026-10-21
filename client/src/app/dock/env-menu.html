@@ -1,0 +1,100 @@
+<button
+  class="chip"
+  type="button"
+  aria-haspopup="dialog"
+  title="Your setup: every answer is written for it"
+  [attr.aria-expanded]="isOpen()"
+  (click)="toggle()"
+>
+  <app-icon name="terminal" [size]="13" />
+  <span class="chip-label">{{ settings.envLabel() }}</span>
+  @if (!settings.envConfirmed()) {
+    <span class="dot" title="Check your setup"></span>
+  }
+  <app-icon name="chevron-down" [size]="12" />
+</button>
+
+<ng-template #distroField>
+  <label class="field">
+    <span class="field-label">{{ env().os === 'windows' ? 'WSL distro' : 'Distro' }}</span>
+    <select class="input" (change)="pickDistro($any($event.target).value)">
+      @if (!env().distro && !customDistro()) {
+        <option value="" selected disabled>Choose…</option>
+      }
+      @for (distro of distros(); track distro) {
+        <option [value]="distro" [selected]="!customDistro() && distro === env().distro">{{ distro }}</option>
+      }
+      <option [value]="other" [selected]="customDistro()">Other…</option>
+    </select>
+  </label>
+  @if (customDistro()) {
+    <div class="field">
+      <span></span>
+      <input
+        #custom
+        class="input custom-distro"
+        placeholder="Which distro?"
+        maxlength="60"
+        [value]="env().distro"
+        (input)="setDistro(custom.value)"
+      />
+    </div>
+  }
+</ng-template>
+
+@if (isOpen()) {
+  <div class="panel menu" role="dialog" aria-label="Your setup">
+    <div class="panel-title">Your setup</div>
+    <p class="panel-hint">Answers are written for this machine, so you never have to say it.</p>
+
+    <div class="field">
+      <span class="field-label">System</span>
+      <div class="segmented" role="radiogroup" aria-label="Operating system">
+        @for (os of osList; track os.id) {
+          <button
+            type="button"
+            role="radio"
+            [class.on]="env().os === os.id"
+            [attr.aria-checked]="env().os === os.id"
+            (click)="setOs(os.id)"
+          >
+            {{ os.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (env().os === 'linux') {
+      <ng-container *ngTemplateOutlet="distroField" />
+    }
+
+    <label class="field">
+      <span class="field-label">Shell</span>
+      <select class="input" (change)="setShell($any($event.target).value)">
+        @for (shell of shells(); track shell) {
+          <option [value]="shell" [selected]="shell === env().shell">{{ shell }}</option>
+        }
+      </select>
+    </label>
+
+    @if (env().os === 'windows' && showDistro()) {
+      <ng-container *ngTemplateOutlet="distroField" />
+    }
+
+    <label class="field column">
+      <span class="field-label">Also assume <span class="muted">(optional)</span></span>
+      <textarea
+        class="input"
+        rows="2"
+        maxlength="500"
+        placeholder="e.g. I use yay for the AUR, doas instead of sudo"
+        [value]="env().notes"
+        (input)="setNotes($any($event.target).value)"
+      ></textarea>
+    </label>
+
+    <div class="panel-foot">
+      <button class="btn primary small" type="button" (click)="close()">Done</button>
+    </div>
+  </div>
+}

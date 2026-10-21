@@ -1,0 +1,239 @@
+dialog {
+  width: min(680px, calc(100vw - 32px));
+  max-height: min(86vh, 860px);
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  box-shadow: var(--shadow-menu);
+  overflow: auto;
+}
+
+dialog[open] {
+  animation: pop-in 0.14s ease-out;
+}
+
+dialog::backdrop {
+  background: rgba(15, 15, 15, 0.45);
+}
+
+.sheet {
+  --paper: var(--note-yellow);
+}
+.sheet[data-color='orange'] { --paper: var(--note-orange); }
+.sheet[data-color='red'] { --paper: var(--note-red); }
+.sheet[data-color='pink'] { --paper: var(--note-pink); }
+.sheet[data-color='purple'] { --paper: var(--note-purple); }
+.sheet[data-color='blue'] { --paper: var(--note-blue); }
+.sheet[data-color='green'] { --paper: var(--note-green); }
+.sheet[data-color='brown'] { --paper: var(--note-brown); }
+.sheet[data-color='gray'] { --paper: var(--note-gray); }
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 10px 10px 16px;
+  background: var(--paper);
+}
+
+.grow {
+  flex: 1;
+}
+
+.swatches {
+  display: flex;
+  gap: 6px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  cursor: pointer;
+}
+.swatch[data-color='yellow'] { background: var(--note-yellow); }
+.swatch[data-color='orange'] { background: var(--note-orange); }
+.swatch[data-color='red'] { background: var(--note-red); }
+.swatch[data-color='pink'] { background: var(--note-pink); }
+.swatch[data-color='purple'] { background: var(--note-purple); }
+.swatch[data-color='blue'] { background: var(--note-blue); }
+.swatch[data-color='green'] { background: var(--note-green); }
+.swatch[data-color='brown'] { background: var(--note-brown); }
+.swatch[data-color='gray'] { background: var(--note-gray); }
+
+.swatch[aria-checked='true'] {
+  box-shadow:
+    inset 0 0 0 1px var(--border-strong),
+    0 0 0 2px var(--bg-elevated),
+    0 0 0 4px var(--text-2);
+}
+
+.body {
+  padding: 18px 28px 26px;
+}
+
+.title {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.title::placeholder {
+  color: var(--text-3);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 8px 0 18px;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.tag {
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--hover);
+  color: var(--text-2);
+}
+
+.asked {
+  max-width: 100%;
+  overflow: hidden;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+section + section {
+  margin-top: 20px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 26px;
+  margin-bottom: 6px;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.code,
+.code-edit {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--code-bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.code {
+  cursor: copy;
+}
+
+.code.placeholder {
+  color: var(--text-3);
+  font-family: var(--font);
+  cursor: text;
+}
+
+.code-edit {
+  resize: vertical;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.code-edit:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px var(--accent-soft);
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.where {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  color: var(--warn);
+  font-size: 12.5px;
+}
+
+.explanation {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+
+.muted {
+  margin: 0;
+  font-size: 13px;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.memo {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+  outline: none;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.memo:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+  .body {
+    padding: 14px 16px 20px;
+  }
+
+  .title {
+    font-size: 21px;
+  }
+
+  .swatches {
+    gap: 4px;
+  }
+}

@@ -1,0 +1,109 @@
+:host {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chip:hover,
+.chip[aria-expanded='true'] {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.panel {
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: min(330px, calc(100vw - 24px));
+  padding: 14px;
+  transform-origin: bottom left;
+}
+
+.panel-title {
+  font-weight: 600;
+}
+
+.panel-hint {
+  margin: 2px 0 14px;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.field.column {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.field-label {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.segmented {
+  display: flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--hover);
+}
+
+.segmented button {
+  flex: 1;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.segmented button.on {
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.1),
+    0 0 0 1px var(--border);
+}
+
+.panel-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}

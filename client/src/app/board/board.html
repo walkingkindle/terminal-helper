@@ -1,0 +1,23 @@
+@if (store.notes().length === 0) {
+  <div class="empty">
+    <div class="empty-note">
+      <p class="empty-title">Nothing pinned yet</p>
+      <p>
+        Ask something below, then hit
+        <span class="pin-chip"><app-icon name="pin" [size]="12" /> Pin</span>
+        on a command to stick it here.
+      </p>
+    </div>
+  </div>
+} @else if (store.filtered().length === 0) {
+  <p class="no-match">No notes match “{{ store.query() }}”.</p>
+} @else {
+  <div class="wall">
+    @for (note of visible(); track note.id) {
+      <app-sticky-note [note]="note" [landed]="store.landed() === note.id" (open)="dialog.open(note.id)" />
+    }
+  </div>
+  @if (visible().length < store.filtered().length) {
+    <div class="sentinel" (appInView)="more()" [inViewRoot]="host"></div>
+  }
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/server/">
+    <Project Path="server/TerminalHelper.Api.Tests/TerminalHelper.Api.Tests.csproj" />
+    <Project Path="server/TerminalHelper.Api/TerminalHelper.Api.csproj" />
+  </Folder>
+</Solution>

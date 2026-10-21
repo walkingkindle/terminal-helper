@@ -1,0 +1,110 @@
+<div class="q">
+  <span class="prompt" aria-hidden="true">›</span>
+  <span class="q-text">{{ turn().question }}</span>
+  <span class="q-meta">{{ turn().env }}@if (turn().verbose) { · verbose}</span>
+</div>
+
+<div class="a">
+  @let answer = turn().answer;
+  @if (answer.answer) {
+    <p class="a-text">{{ answer.answer }}</p>
+  }
+
+  @for (cmd of answer.commands; track $index; let i = $index, last = $last) {
+    @let ready = !streaming() || !last;
+    @let b = breakdown(i, cmd);
+    @let explain = turn().explains[i];
+    <div class="item">
+      @if (showLabels() && cmd.label) {
+        <div class="item-label">
+          @if (answer.commands.length > 1) {
+            <span class="step">{{ i + 1 }}</span>
+          }
+          {{ cmd.label }}
+        </div>
+      }
+      @if (cmd.where) {
+        <div class="where"><app-icon name="corner" [size]="12" /> {{ cmd.where }}</div>
+      }
+      <div class="code">
+        <app-command-code [code]="cmd.command" [caret]="streaming() && last" />
+        <div class="actions">
+          <button class="icon-btn small" type="button" title="Copy" aria-label="Copy command" [disabled]="!ready" (click)="copy(i, cmd.command)">
+            <app-icon [name]="copied() === i ? 'check' : 'copy'" [size]="14" />
+          </button>
+          @if (!b.explanation && !b.parts.length) {
+            <button
+              class="btn small"
+              type="button"
+              title="Explain each part of this command"
+              [disabled]="!ready || explain?.status === 'streaming'"
+              (click)="ask.explain(turn().id, i)"
+            >
+              <app-icon name="book" [size]="13" /> Explain
+            </button>
+          }
+          <button
+            class="btn small pin"
+            type="button"
+            [class.on]="isPinned(i)"
+            [disabled]="!ready"
+            [title]="isPinned(i) ? 'Remove from the board' : 'Pin to the board'"
+            (click)="togglePin(i, cmd)"
+          >
+            <app-icon name="pin" [size]="13" [filled]="isPinned(i)" /> {{ isPinned(i) ? 'Pinned' : 'Pin' }}
+          </button>
+        </div>
+      </div>
+      @if (b.explanation) {
+        <p class="explanation">{{ b.explanation }}</p>
+      }
+      @if (b.parts.length) {
+        <dl class="parts">
+          @for (part of b.parts; track $index) {
+            <dt><app-command-code [code]="part.token" /></dt>
+            <dd>{{ part.meaning }}</dd>
+          }
+        </dl>
+      }
+      @if (explain?.status === 'streaming' && !b.explanation && !b.parts.length) {
+        <p class="status">Explaining…</p>
+      }
+      @if (explain?.status === 'error') {
+        <p class="error">{{ explain?.error }}</p>
+      }
+    </div>
+  }
+
+  @if (answer.note) {
+    <p class="note"><app-icon name="alert" [size]="13" /> {{ answer.note }}</p>
+  }
+
+  @switch (turn().status) {
+    @case ('streaming') {
+      @if (empty()) {
+        <div class="skeleton" role="status" aria-label="Answering"></div>
+      }
+    }
+    @case ('stopped') {
+      <p class="status">Stopped.</p>
+    }
+    @case ('error') {
+      <div class="error-box" role="alert">
+        <app-icon name="alert" [size]="14" />
+        <span>{{ turn().error }}</span>
+        <button class="btn small outline" type="button" (click)="ask.retry(turn().id)">
+          <app-icon name="retry" [size]="13" /> Retry
+        </button>
+      </div>
+    }
+    @case ('done') {
+      @if (turn().stopReason === 'refusal') {
+        <p class="status">Claude declined to answer that one.</p>
+      } @else if (turn().stopReason === 'max_tokens') {
+        <p class="status">The answer was cut off.</p>
+      } @else if (empty()) {
+        <p class="status">No answer came back. Try rephrasing.</p>
+      }
+    }
+  }
+</div>

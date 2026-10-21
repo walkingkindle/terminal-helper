@@ -1,0 +1,19 @@
+<app-topbar />
+<app-board />
+<div
+  class="divider"
+  role="separator"
+  tabindex="0"
+  aria-orientation="horizontal"
+  aria-label="Resize the ask panel"
+  title="Drag to resize · double-click to reset"
+  [attr.aria-valuemin]="limits.min"
+  [attr.aria-valuemax]="limits.max"
+  [attr.aria-valuenow]="dockPercent()"
+  (pointerdown)="startResize($event)"
+  (dblclick)="resetDock()"
+  (keydown)="onResizeKey($event)"
+></div>
+<app-dock />
+<app-note-dialog />
+<app-toast-host />

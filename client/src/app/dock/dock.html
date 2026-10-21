@@ -1,0 +1,81 @@
+<div class="thread" #thread (scroll)="onScroll()">
+  <div class="column">
+    @if (health() === null) {
+      <div class="banner" role="alert">
+        <app-icon name="alert" [size]="14" />
+        <span>Can't reach the API server. Start it with <code>./dev.sh</code> (see README); this clears once it's up.</span>
+      </div>
+    } @else if (health()?.credentials === false) {
+      <div class="banner" role="alert">
+        <app-icon name="alert" [size]="14" />
+        <span>
+          No Anthropic API key on the server yet. Run
+          <code>dotnet user-secrets set Anthropic:ApiKey sk-ant-… --project server/TerminalHelper.Api</code>
+          and restart the API.
+        </span>
+      </div>
+    }
+
+    @if (ask.turns().length === 0) {
+      <div class="intro">
+        <p class="intro-title">Ask how to do something in the terminal.</p>
+        <p class="intro-sub">
+          Answers are for
+          <button class="link" type="button" (click)="envMenu.open()">{{ settings.envLabel() }}</button>{{
+            settings.envConfirmed() ? '.' : ' — is that your setup?'
+          }}
+        </p>
+        <div class="examples">
+          @for (example of examples; track example) {
+            <button class="example" type="button" (click)="askExample(example)">{{ example }}</button>
+          }
+        </div>
+      </div>
+    } @else {
+      @for (turn of ask.turns(); track turn.id) {
+        <app-turn [turn]="turn" />
+      }
+    }
+  </div>
+</div>
+
+<div class="composer-wrap">
+  <div class="composer">
+    <textarea
+      #input
+      rows="1"
+      placeholder="How do I…"
+      aria-label="Ask a terminal question"
+      spellcheck="false"
+      maxlength="2000"
+      [value]="draft()"
+      (input)="onInput(input.value)"
+      (keydown)="onKeydown($event)"
+    ></textarea>
+    <div class="bar">
+      <app-env-menu #envMenu />
+      <label class="toggle" title="Explain every flag and argument, man-page style">
+        <input
+          type="checkbox"
+          [checked]="settings.verbose()"
+          (change)="settings.verbose.set($any($event.target).checked)"
+        />
+        <span class="switch" aria-hidden="true"></span>
+        Verbose
+      </label>
+      <span class="grow"></span>
+      @if (ask.turns().length) {
+        <button class="btn small" type="button" title="Clear the conversation" (click)="ask.clear()">Clear</button>
+      }
+      @if (ask.busy()) {
+        <button class="send stop" type="button" title="Stop (Esc)" aria-label="Stop" (click)="ask.stop()">
+          <app-icon name="stop" [size]="12" [filled]="true" />
+        </button>
+      } @else {
+        <button class="send" type="button" title="Ask (Enter)" aria-label="Ask" [disabled]="!draft().trim()" (click)="submit()">
+          <app-icon name="arrow-up" [size]="16" />
+        </button>
+      }
+    </div>
+  </div>
+</div>

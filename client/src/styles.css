@@ -1,0 +1,308 @@
+/*
+ * Design tokens: Notion's palette and type. Every color is light-dark(light, dark), so the
+ * theme is just `color-scheme`: the OS decides unless the user picked one (data-theme).
+ */
+:root {
+  color-scheme: light dark;
+  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Helvetica,
+    'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+  --mono: 'SFMono-Regular', ui-monospace, Menlo, Consolas, 'PT Mono', 'Liberation Mono', Courier, monospace;
+
+  --bg: light-dark(#ffffff, #191919);
+  --bg-soft: light-dark(#f7f7f5, #202020);
+  --bg-elevated: light-dark(#ffffff, #252525);
+  --text: light-dark(#37352f, rgba(255, 255, 255, 0.81));
+  --text-2: light-dark(rgba(55, 53, 47, 0.65), rgba(255, 255, 255, 0.5));
+  --text-3: light-dark(rgba(55, 53, 47, 0.45), rgba(255, 255, 255, 0.3));
+  --border: light-dark(rgba(55, 53, 47, 0.09), rgba(255, 255, 255, 0.094));
+  --border-strong: light-dark(rgba(55, 53, 47, 0.16), rgba(255, 255, 255, 0.15));
+  --hover: light-dark(rgba(55, 53, 47, 0.06), rgba(255, 255, 255, 0.055));
+  --pressed: light-dark(rgba(55, 53, 47, 0.1), rgba(255, 255, 255, 0.09));
+  --accent: #2383e2;
+  --accent-hover: #0077d4;
+  --accent-soft: light-dark(rgba(35, 131, 226, 0.16), rgba(35, 131, 226, 0.3));
+  --danger: #eb5757;
+  --warn: light-dark(#d9730d, #c77d48);
+  --code-bg: light-dark(#f7f6f3, rgba(255, 255, 255, 0.04));
+  --toast-bg: light-dark(#2f2f2f, #3a3a3a);
+  --toast-text: rgba(255, 255, 255, 0.9);
+  --shadow-menu: light-dark(rgba(15, 15, 15, 0.05), rgba(15, 15, 15, 0.1)) 0 0 0 1px,
+    light-dark(rgba(15, 15, 15, 0.1), rgba(15, 15, 15, 0.2)) 0 3px 6px,
+    light-dark(rgba(15, 15, 15, 0.2), rgba(15, 15, 15, 0.4)) 0 9px 24px;
+  --shadow-note: 0 1px 2px light-dark(rgba(15, 15, 15, 0.05), rgba(0, 0, 0, 0.3)),
+    0 3px 8px light-dark(rgba(15, 15, 15, 0.07), rgba(0, 0, 0, 0.25));
+  --shadow-note-hover: 0 3px 6px light-dark(rgba(15, 15, 15, 0.06), rgba(0, 0, 0, 0.35)),
+    0 12px 28px light-dark(rgba(15, 15, 15, 0.12), rgba(0, 0, 0, 0.4));
+  /* The command well inside a sticky note. */
+  --note-well: light-dark(rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.22));
+
+  --note-yellow: light-dark(#fbf3db, #564328);
+  --note-orange: light-dark(#fbecdd, #5c3b23);
+  --note-red: light-dark(#fdebec, #522e2a);
+  --note-pink: light-dark(#f9eef3, #4e2c3c);
+  --note-purple: light-dark(#f4f0f7, #3c2d49);
+  --note-blue: light-dark(#e7f3f8, #143a4e);
+  --note-green: light-dark(#edf3ec, #243d30);
+  --note-brown: light-dark(#f4eeee, #4a3228);
+  --note-gray: light-dark(#f1f1ef, #2f2f2f);
+
+  --tok-cmd: light-dark(#37352f, rgba(255, 255, 255, 0.9));
+  --tok-flag: light-dark(#337ea9, #5e9fd8);
+  --tok-str: light-dark(#448361, #5fb185);
+  --tok-var: light-dark(#c14c8a, #e06aa8);
+  --tok-op: light-dark(#9065b0, #b18ee6);
+  --tok-ph: light-dark(#d9730d, #e8a35f);
+  --tok-comment: light-dark(#9b9a97, #8a8a8a);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+kbd {
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--text-3);
+  font: 11px/16px var(--font);
+  white-space: nowrap;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.btn:active {
+  background: var(--pressed);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--accent-hover);
+}
+.btn.outline {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.btn.small {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.btn.danger:hover {
+  background: rgba(235, 87, 87, 0.12);
+  color: var(--danger);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.icon-btn.small {
+  width: 24px;
+  height: 24px;
+}
+
+/* Menus and popovers */
+.menu {
+  position: absolute;
+  z-index: 40;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-menu);
+  animation: pop-in 0.09s ease-out;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover {
+  background: var(--hover);
+}
+.menu-item app-icon {
+  color: var(--text-2);
+}
+.menu-item .trail {
+  margin-left: auto;
+}
+.menu-sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--border);
+}
+.menu-label {
+  padding: 4px 8px 2px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+.menu-hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 8px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.input {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--hover);
+  box-shadow: inset 0 0 0 1px var(--border);
+  outline: none;
+}
+.input:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px var(--accent-soft);
+}
+textarea.input {
+  height: auto;
+  padding: 6px 8px;
+  resize: vertical;
+}
+select.input {
+  cursor: pointer;
+}
+
+/* Shared by the dock and the note dialog: a man-page style OPTIONS list. */
+.parts {
+  display: grid;
+  grid-template-columns: minmax(64px, max-content) 1fr;
+  gap: 5px 16px;
+  margin: 0;
+}
+.parts dt {
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.parts dd {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Short and never fully transparent, so menus feel instant. */
+@keyframes pop-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.985);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

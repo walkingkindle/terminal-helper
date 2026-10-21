@@ -1,0 +1,143 @@
+<dialog
+  #dialog
+  aria-labelledby="note-title"
+  (close)="onClosed()"
+  (pointerdown)="onPointerDown($event)"
+  (click)="onClick($event)"
+>
+  @if (note(); as n) {
+    <div class="sheet" [attr.data-color]="n.color">
+      <header class="head">
+        <div class="swatches" role="radiogroup" aria-label="Note color">
+          @for (color of colors; track color) {
+            <button
+              class="swatch"
+              type="button"
+              role="radio"
+              [attr.data-color]="color"
+              [attr.aria-checked]="n.color === color"
+              [attr.aria-label]="color"
+              [title]="color"
+              (click)="board.update(n.id, { color })"
+            ></button>
+          }
+        </div>
+        <span class="grow"></span>
+        <button class="icon-btn" type="button" title="Copy command" [disabled]="!n.command" (click)="copy(n.command)">
+          <app-icon name="copy" />
+        </button>
+        <button class="icon-btn" type="button" title="Delete note" (click)="remove(n)">
+          <app-icon name="trash" />
+        </button>
+        <button class="icon-btn" type="button" title="Close (Esc)" (click)="state.close()">
+          <app-icon name="x" />
+        </button>
+      </header>
+
+      <div class="body">
+        <input
+          id="note-title"
+          class="title"
+          placeholder="Untitled"
+          maxlength="120"
+          [value]="n.label"
+          [attr.autofocus]="editing() ? null : ''"
+          (change)="saveLabel(n, $any($event.target).value)"
+          (keydown.enter)="$any($event.target).blur()"
+        />
+        <div class="meta">
+          @if (n.env) {
+            <span class="tag">{{ n.env }}</span>
+          }
+          <span>{{ created() }}</span>
+          @if (n.question) {
+            <span class="asked" [title]="n.question">“{{ n.question }}”</span>
+          }
+        </div>
+
+        <section>
+          <div class="section-head">
+            <span>Command</span>
+            @if (!editing()) {
+              <button class="btn small" type="button" (click)="editing.set(true)">
+                <app-icon name="pencil" [size]="13" /> Edit
+              </button>
+            }
+          </div>
+          @if (editing()) {
+            <textarea
+              #area
+              class="code-edit"
+              rows="3"
+              spellcheck="false"
+              placeholder="Paste or type a command"
+              autofocus
+              [value]="n.command"
+              (blur)="saveCommand(n, area.value)"
+              (keydown)="onCommandKey($event, area)"
+            ></textarea>
+            <p class="hint">Saved when you click away, or press <kbd>Ctrl Enter</kbd>.</p>
+          } @else if (n.command) {
+            <button class="code" type="button" title="Click to copy" (click)="copy(n.command)">
+              <app-command-code [code]="n.command" />
+            </button>
+          } @else {
+            <button class="code placeholder" type="button" (click)="editing.set(true)">Add a command…</button>
+          }
+          @if (n.where) {
+            <div class="where"><app-icon name="corner" [size]="12" /> {{ n.where }}</div>
+          }
+        </section>
+
+        <section>
+          <div class="section-head">
+            <span>Breakdown</span>
+            @if (n.command && progress()?.status !== 'streaming') {
+              <button class="btn small" type="button" (click)="explain(n)">
+                <app-icon name="book" [size]="13" />
+                {{ breakdown().parts.length || breakdown().explanation ? 'Explain again' : 'Explain' }}
+              </button>
+            }
+          </div>
+          @let b = breakdown();
+          @if (b.explanation) {
+            <p class="explanation">{{ b.explanation }}</p>
+          }
+          @if (b.parts.length) {
+            <dl class="parts">
+              @for (part of b.parts; track $index) {
+                <dt><app-command-code [code]="part.token" /></dt>
+                <dd>{{ part.meaning }}</dd>
+              }
+            </dl>
+          }
+          @if (!b.explanation && !b.parts.length) {
+            <p class="muted">
+              @if (progress()?.status === 'streaming') {
+                Explaining…
+              } @else {
+                No breakdown yet. Explain goes through every flag and argument, man-page style.
+              }
+            </p>
+          }
+          @if (progress(); as p) {
+            @if (p.status === 'error') {
+              <p class="error">{{ p.error }}</p>
+            }
+          }
+        </section>
+
+        <section>
+          <div class="section-head"><span>Your notes</span></div>
+          <textarea
+            class="memo"
+            rows="3"
+            placeholder="Anything to remember about this one…"
+            [value]="n.memo"
+            (input)="onMemo(n, $any($event.target).value)"
+          ></textarea>
+        </section>
+      </div>
+    </div>
+  }
+</dialog>

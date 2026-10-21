@@ -1,0 +1,69 @@
+:host {
+  --bar: 44px;
+  --divider: 9px;
+  /* --dock is the remembered fraction; the clamp keeps both panes usable on any screen. */
+  --dock-height: clamp(
+    180px,
+    calc(var(--dock, 0.32) * (100dvh - var(--bar) - var(--divider))),
+    calc(100dvh - var(--bar) - var(--divider) - 120px)
+  );
+  display: grid;
+  grid-template-rows: var(--bar) minmax(0, 1fr) var(--divider) var(--dock-height);
+  height: 100vh;
+  height: 100dvh;
+}
+
+:host(.resizing) {
+  cursor: row-resize;
+  user-select: none;
+}
+
+.divider {
+  position: relative;
+  background: var(--bg-soft);
+  cursor: row-resize;
+  touch-action: none;
+}
+
+/* The seam between board and dock; it turns blue while you drag, like Notion's sidebar handle. */
+.divider::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--border-strong);
+  transition:
+    background 0.12s,
+    height 0.12s;
+}
+
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.divider:hover::before,
+.divider:focus-visible::before,
+:host(.resizing) .divider::before {
+  height: 2px;
+  background: var(--accent);
+}
+
+.divider:hover::after,
+.divider:focus-visible::after,
+:host(.resizing) .divider::after {
+  opacity: 1;
+}
+
+.divider:focus-visible {
+  outline: none;
+}

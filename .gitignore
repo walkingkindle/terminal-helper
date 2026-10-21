@@ -1,0 +1,16 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# The Angular build is written into the API's wwwroot (see README)
+server/TerminalHelper.Api/wwwroot/
+
+# Node / Angular (client/.gitignore has the rest)
+node_modules/
+
+# Editors and OS
+.idea/
+.DS_Store
+Thumbs.db

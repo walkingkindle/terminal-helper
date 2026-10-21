@@ -1,0 +1,169 @@
+:host {
+  --paper: var(--note-yellow);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 140px;
+  padding: 22px 14px 10px;
+  border-radius: 3px;
+  background: var(--paper);
+  box-shadow: var(--shadow-note);
+  cursor: pointer;
+  transform: rotate(var(--tilt, 0deg));
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 170px;
+}
+
+:host([data-color='orange']) { --paper: var(--note-orange); }
+:host([data-color='red']) { --paper: var(--note-red); }
+:host([data-color='pink']) { --paper: var(--note-pink); }
+:host([data-color='purple']) { --paper: var(--note-purple); }
+:host([data-color='blue']) { --paper: var(--note-blue); }
+:host([data-color='green']) { --paper: var(--note-green); }
+:host([data-color='brown']) { --paper: var(--note-brown); }
+:host([data-color='gray']) { --paper: var(--note-gray); }
+
+/* The pin. */
+:host::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff9a8f, #e0483e 55%, #a3302a);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+:host(:hover),
+:host(:focus-visible) {
+  z-index: 1;
+  box-shadow: var(--shadow-note-hover);
+  transform: rotate(0deg) translateY(-2px);
+}
+
+:host(.landed) {
+  animation: land 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: translateY(-36px) rotate(-7deg) scale(1.08);
+  }
+  55% {
+    opacity: 1;
+  }
+}
+
+.label {
+  display: -webkit-box;
+  margin-bottom: 8px;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cmd {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 7px 28px 7px 9px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--note-well);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: copy;
+}
+
+.cmd app-command-code {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+.cmd.empty {
+  color: var(--text-3);
+  font-style: italic;
+  cursor: pointer;
+}
+
+.copy-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.cmd:hover .copy-icon,
+.cmd:focus-visible .copy-icon {
+  opacity: 1;
+}
+
+.where {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 7px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.memo {
+  display: -webkit-box;
+  margin: 8px 0 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12.5px;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+
+.env {
+  max-width: 62%;
+  overflow: hidden;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--note-well);
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explained {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.age {
+  margin-left: auto;
+  white-space: nowrap;
+}
