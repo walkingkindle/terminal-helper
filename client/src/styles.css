@@ -270,6 +270,17 @@ select.input {
   cursor: pointer;
 }
 
+/* An open <select> list doesn't follow the dark theme everywhere: Chromium on Linux paints it white
+   while the text stays light. Explicit colors keep the options readable in both themes. */
+option {
+  background-color: var(--bg-elevated);
+  color: var(--text);
+}
+
+option:disabled {
+  color: var(--text-3);
+}
+
 /* Shared by the dock and the note dialog: a man-page style OPTIONS list. */
 .parts {
   display: grid;
