@@ -1,10 +1,13 @@
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { ApiError } from './api';
+import { LocalApi, StoredBoard } from './local-api';
 import { Note, NOTE_COLORS, NoteColor, Part } from './models';
-import { local, writeText } from './storage';
+import { local } from './storage';
 import { Toasts } from './toasts';
 import { newId } from './util';
 
-const KEY = 'th.board';
+/** Where the first version kept the board, in the browser. Moved to the data folder on first load. */
+const BROWSER_KEY = 'th.board';
 const VERSION = 1;
 
 export interface NewNote {
@@ -24,15 +27,27 @@ export interface ImportResult {
   skipped: number;
 }
 
+export type BoardStatus = 'loading' | 'ready' | 'error';
+
 /**
- * The sticky notes. Phase 1 keeps them in localStorage (versioned, so a later move to a
- * server only needs a migration); export/import moves them between browsers.
+ * The sticky notes. They live in notes.json in the data folder on this computer, so they outlast the
+ * browser and every way of opening the app sees the same board. Changes save as they happen.
  */
 @Injectable({ providedIn: 'root' })
 export class BoardStore {
+  private readonly api = inject(LocalApi);
   private readonly toasts = inject(Toasts);
-  private lastSaved = local()?.getItem(KEY) ?? '';
-  private readonly _notes = signal<Note[]>(parseBoard(this.lastSaved));
+  private readonly _notes = signal<Note[]>([]);
+
+  /** The server's revision of the board this copy is based on. */
+  private revision = 0;
+  /** The notes as last saved (or loaded), to skip saves that would change nothing. */
+  private savedJson = '[]';
+  private inflight: Promise<void> | null = null;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  readonly status = signal<BoardStatus>('loading');
+  readonly loadError = signal('');
 
   /** Newest first. */
   readonly notes = this._notes.asReadonly();
@@ -47,13 +62,30 @@ export class BoardStore {
   readonly origins = computed(() => new Set(this._notes().map((n) => n.origin).filter(Boolean)));
 
   constructor() {
-    effect(() => this.persist(this._notes()));
-    // Another tab changed the board: take its version instead of overwriting it later.
-    window.addEventListener('storage', (event) => {
-      if (event.key !== KEY) return;
-      this.lastSaved = event.newValue ?? '';
-      this._notes.set(parseBoard(this.lastSaved));
+    effect(() => {
+      this._notes();
+      if (this.status() === 'ready') untracked(() => void this.save());
     });
+    // Another window may have changed the board while this one was in the background.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void this.refresh();
+    });
+    void this.load();
+  }
+
+  async load() {
+    this.status.set('loading');
+    try {
+      const board = await this.api.board();
+      const early = this._notes(); // pinned while the board was still loading
+      this.adopt(board);
+      if (early.length) this._notes.update((notes) => [...early.filter((e) => !notes.some((n) => n.id === e.id)), ...notes]);
+      this.status.set('ready');
+      await this.moveBrowserBoard();
+    } catch (error) {
+      this.loadError.set(messageOf(error));
+      this.status.set('error');
+    }
   }
 
   get(id: string): Note | undefined {
@@ -157,18 +189,73 @@ export class BoardStore {
     );
   }
 
-  private persist(notes: Note[]) {
-    const json = JSON.stringify({ version: VERSION, notes });
-    if (json === this.lastSaved) return;
-    if (writeText(local(), KEY, json)) {
-      this.lastSaved = json;
-    } else {
-      this.toasts.show("Couldn't save the board: browser storage is full or blocked. Export it to keep a copy.", {
-        kind: 'error',
-        duration: 8000,
-      });
+  /** Resolves once everything changed so far is saved, or the save failed and a retry is scheduled. */
+  private save(): Promise<void> {
+    this.inflight ??= this.saveChanges().finally(() => (this.inflight = null));
+    return this.inflight;
+  }
+
+  /**
+   * One save at a time; edits made while it's in flight go out right after. If another window saved
+   * first, its board wins and this one shows it (rare: it's one person's board).
+   */
+  private async saveChanges() {
+    clearTimeout(this.retryTimer);
+    try {
+      for (let json = JSON.stringify(this._notes()); json !== this.savedJson; json = JSON.stringify(this._notes())) {
+        const outcome = await this.api.saveBoard(this.revision, json);
+        if (!outcome.saved) {
+          this.adopt(outcome.board);
+          this.toasts.show('The board was changed in another window, so this one now shows that version.');
+          return;
+        }
+        this.revision = outcome.revision;
+        this.savedJson = json;
+      }
+    } catch (error) {
+      this.toasts.show(`Couldn't save the board: ${messageOf(error)} Retrying…`, { kind: 'error', duration: 5000 });
+      this.retryTimer = setTimeout(() => void this.save(), 5000);
     }
   }
+
+  /** Picks up changes made in another window, unless this one has unsaved changes of its own. */
+  private async refresh() {
+    if (this.status() !== 'ready' || this.inflight || JSON.stringify(this._notes()) !== this.savedJson) return;
+    try {
+      const board = await this.api.board();
+      if (board.revision !== this.revision) this.adopt(board);
+    } catch {
+      // Nothing to do: the next save reports the problem.
+    }
+  }
+
+  private adopt(board: StoredBoard) {
+    const notes = board.notes.map(toNote).filter((n) => n !== null);
+    this.revision = board.revision;
+    this.savedJson = JSON.stringify(notes);
+    this._notes.set(notes);
+  }
+
+  /**
+   * The first version kept the board in browser storage. If the data folder has no board yet, move
+   * that one in, and only forget the browser copy once the server has saved it.
+   */
+  private async moveBrowserBoard() {
+    const raw = local()?.getItem(BROWSER_KEY);
+    if (!raw || this.revision !== 0 || this._notes().length) return;
+    const notes = parseBoard(raw);
+    if (!notes.length) return;
+    this._notes.set(notes);
+    await this.save();
+    if (this.savedJson !== JSON.stringify(notes)) return;
+    local()?.setItem(`${BROWSER_KEY}.moved`, raw);
+    local()?.removeItem(BROWSER_KEY);
+    this.toasts.show(`Moved ${notes.length} ${notes.length === 1 ? 'note' : 'notes'} from this browser into your data folder.`);
+  }
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof ApiError ? error.message : 'Something went wrong.';
 }
 
 function matches(note: Note, query: string): boolean {

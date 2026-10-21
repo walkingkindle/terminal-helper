@@ -6,18 +6,31 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using TerminalHelper.Api.Assistant;
 
 namespace TerminalHelper.Api.Tests;
 
 /// <summary>Stands in for api.anthropic.com: records each request and replies with a canned response.</summary>
 public sealed class FakeAnthropic : HttpMessageHandler
 {
+    /// <summary>Bodies of Messages API calls.</summary>
     public List<JsonDocument> Requests { get; } = [];
+
+    /// <summary>The credential each request carried (x-api-key or bearer token), in order.</summary>
+    public List<string?> Keys { get; } = [];
 
     public Func<HttpResponseMessage> Respond { get; set; } = () => Stream("""{"answer":"","commands":[],"note":""}""");
 
+    /// <summary>GET /v1/models, which the app calls to check a key before saving it.</summary>
+    public Func<HttpResponseMessage> RespondToModels { get; set; } = () => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent("""{"data":[],"has_more":false,"first_id":null,"last_id":null}""", Encoding.UTF8, "application/json"),
+    };
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
+        Keys.Add(request.Headers.TryGetValues("x-api-key", out var key) ? key.First() : request.Headers.Authorization?.Parameter);
+        if (request.RequestUri!.AbsolutePath.EndsWith("/models")) return RespondToModels();
         Requests.Add(JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct)));
         return Respond();
     }
@@ -61,17 +74,44 @@ public sealed class FakeAnthropic : HttpMessageHandler
         Content = new StringContent(
             JsonSerializer.Serialize(new { type = "error", error = new { type, message } }), Encoding.UTF8, "application/json"),
     };
+
+    sealed class Factory(FakeAnthropic upstream) : IClaudeClientFactory
+    {
+        public AnthropicClient Create(string? apiKey) =>
+            new() { ApiKey = apiKey ?? "no-key", HttpClient = new HttpClient(upstream), MaxRetries = 0 };
+    }
+
+    public IClaudeClientFactory ClientFactory() => new Factory(this);
 }
 
+/// <summary>The app wired to a fake Anthropic and its own empty data folder.</summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    readonly Dictionary<string, string?> _settings;
+
+    public ApiFactory(Dictionary<string, string?>? settings = null)
+    {
+        DataDir = Directory.CreateTempSubdirectory("terminal-helper-tests-").FullName;
+        _settings = new(settings ?? []) { ["Storage:DataDir"] = DataDir };
+        // Tests must not pick up a key exported in the developer's shell.
+        _settings.TryAdd("ANTHROPIC_API_KEY", "");
+    }
+
     public FakeAnthropic Upstream { get; } = new();
+
+    public string DataDir { get; }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureTestServices(services => services.AddSingleton(
-            new AnthropicClient { ApiKey = "test-key", HttpClient = new HttpClient(Upstream), MaxRetries = 0 }));
+        foreach (var (key, value) in _settings) builder.UseSetting(key, value);
+        builder.ConfigureTestServices(services => services.AddSingleton(Upstream.ClientFactory()));
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Directory.Exists(DataDir)) Directory.Delete(DataDir, recursive: true);
     }
 }
 

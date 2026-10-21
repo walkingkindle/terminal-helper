@@ -1,4 +1,16 @@
-@if (store.notes().length === 0) {
+@if (store.status() === 'loading') {
+  <!-- A local read takes milliseconds; showing "nothing pinned" meanwhile would just flash. -->
+} @else if (store.status() === 'error') {
+  <div class="empty">
+    <div class="load-error" role="alert">
+      <p class="empty-title">Couldn't load your notes</p>
+      <p>{{ store.loadError() }}</p>
+      <button class="btn outline" type="button" (click)="store.load()">
+        <app-icon name="retry" [size]="14" /> Try again
+      </button>
+    </div>
+  </div>
+} @else if (store.notes().length === 0) {
   <div class="empty">
     <div class="empty-note">
       <p class="empty-title">Nothing pinned yet</p>

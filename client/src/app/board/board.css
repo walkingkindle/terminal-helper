@@ -73,6 +73,20 @@
   white-space: nowrap;
 }
 
+.load-error {
+  max-width: 460px;
+  text-align: center;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.load-error .empty-title {
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .no-match {
   margin-top: 40px;
   color: var(--text-3);

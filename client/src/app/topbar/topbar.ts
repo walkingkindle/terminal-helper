@@ -1,5 +1,6 @@
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { NoteDialogState } from '../board/note-dialog';
+import { SettingsDialogState } from './settings-dialog';
 import { BoardStore } from '../core/board-store';
 import { Settings, Theme } from '../core/settings';
 import { Toasts } from '../core/toasts';
@@ -21,6 +22,7 @@ export class Topbar {
   protected readonly settings = inject(Settings);
   private readonly toasts = inject(Toasts);
   private readonly dialog = inject(NoteDialogState);
+  private readonly settingsDialog = inject(SettingsDialogState);
   private readonly filter = viewChild.required<ElementRef<HTMLInputElement>>('filter');
   private readonly menuAnchor = viewChild.required<ElementRef<HTMLElement>>('menuAnchor');
 
@@ -46,6 +48,11 @@ export class Topbar {
   protected newNote() {
     const note = this.board.add({ label: '', command: '', env: this.settings.envLabel() });
     this.dialog.open(note.id, { editCommand: true });
+  }
+
+  protected openSettings() {
+    this.menuOpen.set(false);
+    this.settingsDialog.open();
   }
 
   protected exportBoard() {

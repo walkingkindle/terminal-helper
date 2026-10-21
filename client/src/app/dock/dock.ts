@@ -7,9 +7,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { AssistantApi, Health } from '../core/api';
 import { AskStore } from '../core/ask-store';
+import { ServerStatus } from '../core/server-status';
 import { Settings } from '../core/settings';
+import { ApiKeyForm } from '../ui/api-key-form';
 import { Icon } from '../ui/icon';
 import { EnvMenu } from './env-menu';
 import { TurnView } from './turn';
@@ -17,20 +18,18 @@ import { TurnView } from './turn';
 /** The docked panel under the board: the conversation and the question box. */
 @Component({
   selector: 'app-dock',
-  imports: [EnvMenu, Icon, TurnView],
+  imports: [ApiKeyForm, EnvMenu, Icon, TurnView],
   templateUrl: './dock.html',
   styleUrl: './dock.css',
 })
 export class Dock {
   protected readonly ask = inject(AskStore);
   protected readonly settings = inject(Settings);
-  private readonly api = inject(AssistantApi);
+  protected readonly status = inject(ServerStatus);
   private readonly input = viewChild.required<ElementRef<HTMLTextAreaElement>>('input');
   private readonly thread = viewChild.required<ElementRef<HTMLElement>>('thread');
 
   protected readonly draft = signal('');
-  /** undefined while checking, null when the API can't be reached. */
-  protected readonly health = signal<Health | null | undefined>(undefined);
   protected readonly examples = [
     'print the working directory',
     'append a line to a file',
@@ -50,10 +49,8 @@ export class Dock {
       let stopped = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
       const check = async () => {
-        const health = await this.api.health();
-        if (stopped) return;
-        this.health.set(health);
-        if (!health?.credentials) timer = setTimeout(check, 4000);
+        const health = await this.status.refresh();
+        if (!stopped && !health?.credentials) timer = setTimeout(check, 4000);
       };
       void check();
       onCleanup(() => {

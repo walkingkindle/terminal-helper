@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Anthropic;
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
@@ -13,7 +12,7 @@ namespace TerminalHelper.Api.Assistant;
 /// Streams Claude's structured (JSON) answer to the browser as server-sent events:
 /// <c>delta</c> (raw JSON text chunks), then exactly one of <c>done</c> or <c>error</c>.
 /// </summary>
-public sealed class ClaudeAssistant(AnthropicClient client, IOptions<AssistantOptions> options, ILogger<ClaudeAssistant> logger)
+public sealed class ClaudeAssistant(ClaudeClients clients, IOptions<AssistantOptions> options, ILogger<ClaudeAssistant> logger)
 {
     static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -80,7 +79,7 @@ public sealed class ClaudeAssistant(AnthropicClient client, IOptions<AssistantOp
                 try
                 {
                     // Created inside the try so a failure before the first event is reported like any other.
-                    events ??= client.Messages.CreateStreaming(parameters, ct).GetAsyncEnumerator(ct);
+                    events ??= clients.Current.Messages.CreateStreaming(parameters, ct).GetAsyncEnumerator(ct);
                     if (!await events.MoveNextAsync()) break;
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -131,7 +130,7 @@ public sealed class ClaudeAssistant(AnthropicClient client, IOptions<AssistantOp
     {
         ErrorPayload payload = ex switch
         {
-            AnthropicUnauthorizedException => new("No valid Anthropic API key. Set ANTHROPIC_API_KEY or the Anthropic:ApiKey user secret (see README).", "auth"),
+            AnthropicUnauthorizedException => new("Anthropic didn't accept the API key. Add a working one in Settings.", "auth"),
             AnthropicRateLimitException => new("Anthropic rate limit hit. Give it a few seconds and try again.", "rate_limit"),
             Anthropic5xxException => new("Anthropic's API is having trouble right now. Try again in a moment.", "upstream"),
             AnthropicBadRequestException bad => new($"Anthropic rejected the request: {bad.Message}", "bad_request"),

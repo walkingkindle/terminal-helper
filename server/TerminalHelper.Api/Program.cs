@@ -1,8 +1,8 @@
 using System.Threading.RateLimiting;
-using Anthropic;
 using Microsoft.Extensions.Options;
 using TerminalHelper.Api;
 using TerminalHelper.Api.Assistant;
+using TerminalHelper.Api.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,15 +18,11 @@ builder.Services.AddOptions<AssistantOptions>()
     .Validate(o => o.Effort.ToLowerInvariant() is "low" or "medium" or "high", "Anthropic:Effort must be low, medium or high.")
     .ValidateOnStart();
 
-builder.Services.AddSingleton(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<AssistantOptions>>().Value;
-    var timeout = TimeSpan.FromSeconds(90);
-    // Leaving ApiKey unset lets the SDK fall back to ANTHROPIC_API_KEY (or an `ant auth login` profile).
-    return string.IsNullOrWhiteSpace(options.ApiKey)
-        ? new AnthropicClient { Timeout = timeout }
-        : new AnthropicClient { ApiKey = options.ApiKey, Timeout = timeout };
-});
+builder.Services.AddSingleton<DataFolder>();
+builder.Services.AddSingleton<NotesStore>();
+builder.Services.AddSingleton<ApiKeyStore>();
+builder.Services.AddSingleton<IClaudeClientFactory, ClaudeClientFactory>();
+builder.Services.AddSingleton<ClaudeClients>();
 builder.Services.AddSingleton<ClaudeAssistant>();
 
 builder.Services.AddProblemDetails();
@@ -44,10 +40,13 @@ builder.Services.AddRateLimiter(limiter =>
 
 var app = builder.Build();
 
+app.Logger.LogInformation("Data folder: {DataFolder}", app.Services.GetRequiredService<DataFolder>().Path);
+
 app.UseStatusCodePages();
 app.UseRateLimiter();
 
 app.MapAssistantEndpoints();
+app.MapLocalEndpoints();
 
 // Production serves the Angular build from wwwroot (see README); in development `ng serve` does.
 app.UseImmutableCachingForHashedBundles();

@@ -7,6 +7,9 @@ obj/
 # The Angular build is written into the API's wwwroot (see README)
 server/TerminalHelper.Api/wwwroot/
 
+# What ./terminal-helper.sh builds and runs
+.build/
+
 # Node / Angular (client/.gitignore has the rest)
 node_modules/
 

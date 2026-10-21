@@ -5,6 +5,7 @@ import { AskStore } from './core/ask-store';
 import { DOCK_DEFAULT, DOCK_MAX, DOCK_MIN, Layout } from './core/layout';
 import { isTyping } from './core/util';
 import { Dock } from './dock/dock';
+import { SettingsDialog } from './topbar/settings-dialog';
 import { Topbar } from './topbar/topbar';
 import { ToastHost } from './ui/toast-host';
 
@@ -14,7 +15,7 @@ import { ToastHost } from './ui/toast-host';
  */
 @Component({
   selector: 'app-root',
-  imports: [Board, Dock, NoteDialog, ToastHost, Topbar],
+  imports: [Board, Dock, NoteDialog, SettingsDialog, ToastHost, Topbar],
   templateUrl: './app.html',
   styleUrl: './app.css',
   host: {

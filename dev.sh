@@ -26,12 +26,6 @@ for port in $API_PORT $WEB_PORT; do
   fi
 done
 
-if [[ -z "${ANTHROPIC_API_KEY:-}" ]] &&
-  ! dotnet user-secrets list --project server/TerminalHelper.Api 2>/dev/null | grep -q '^Anthropic:ApiKey'; then
-  echo "Note: no Anthropic API key is set, so questions will fail until you add one:" >&2
-  echo '  dotnet user-secrets set "Anthropic:ApiKey" "sk-ant-..." --project server/TerminalHelper.Api' >&2
-fi
-
 [[ -d client/node_modules ]] || npm --prefix client ci
 
 # Ctrl+C, a failed start or a closed terminal: take every child process down with this script

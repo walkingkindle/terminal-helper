@@ -40,6 +40,10 @@
   </button>
   @if (menuOpen()) {
     <div class="menu" role="menu">
+      <button class="menu-item" type="button" role="menuitem" (click)="openSettings()">
+        <app-icon name="settings" /> Settings…
+      </button>
+      <div class="menu-sep"></div>
       <button class="menu-item" type="button" role="menuitem" (click)="exportBoard()">
         <app-icon name="download" /> Export board
       </button>

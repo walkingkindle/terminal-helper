@@ -1,18 +1,22 @@
 <div class="thread" #thread (scroll)="onScroll()">
   <div class="column">
-    @if (health() === null) {
-      <div class="banner" role="alert">
-        <app-icon name="alert" [size]="14" />
-        <span>Can't reach the API server. Start it with <code>./dev.sh</code> (see README); this clears once it's up.</span>
-      </div>
-    } @else if (health()?.credentials === false) {
+    @if (status.health() === null) {
       <div class="banner" role="alert">
         <app-icon name="alert" [size]="14" />
         <span>
-          No Anthropic API key on the server yet. Run
-          <code>dotnet user-secrets set Anthropic:ApiKey sk-ant-… --project server/TerminalHelper.Api</code>
-          and restart the API.
+          Can't reach the Terminal Helper server. Start it again with <code>./terminal-helper.sh</code>
+          (or <code>./dev.sh</code> when developing); this clears once it's up.
         </span>
+      </div>
+    } @else if (status.health()?.credentials === false) {
+      <div class="banner key" role="region" aria-label="Add your API key">
+        <p class="key-title"><app-icon name="key" [size]="14" /> Add your Anthropic API key to start asking.</p>
+        <app-api-key-form (saved)="focusInput()" />
+        <p class="key-hint">
+          Create one in the
+          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>
+          under API keys. It's saved on this computer only.
+        </p>
       </div>
     }
 

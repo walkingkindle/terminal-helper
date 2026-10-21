@@ -1,0 +1,59 @@
+<dialog
+  #dialog
+  aria-labelledby="settings-title"
+  (close)="state.close()"
+  (pointerdown)="onPointerDown($event)"
+  (click)="onClick($event)"
+>
+  @if (state.isOpen()) {
+    <div class="sheet">
+      <header class="head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="icon-btn" type="button" title="Close (Esc)" (click)="state.close()">
+          <app-icon name="x" />
+        </button>
+      </header>
+
+      <section>
+        <h3><app-icon name="key" [size]="15" /> Anthropic API key</h3>
+        @if (settings(); as s) {
+          <p class="current">
+            @if (s.apiKey.set && s.apiKey.source) {
+              Using the key ending in <code>{{ s.apiKey.hint }}</code>, {{ sources[s.apiKey.source] }}.
+              @if (s.apiKey.source === 'saved') {
+                <button class="link" type="button" (click)="removeKey()">Remove it</button>
+              }
+            } @else {
+              No key yet. Questions need one.
+            }
+          </p>
+        }
+        <app-api-key-form (saved)="reload()" />
+        <p class="hint">
+          Create one in the
+          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>
+          under API keys. A key saved here stays on this computer and is used before ANTHROPIC_API_KEY.
+        </p>
+      </section>
+
+      <section>
+        <h3><app-icon name="folder" [size]="15" /> Your data</h3>
+        @if (settings(); as s) {
+          <p class="current">Your notes and the saved key live in</p>
+          <div class="path">
+            <code>{{ s.dataDir }}</code>
+            <button class="btn small" type="button" (click)="copyPath(s.dataDir)">Copy</button>
+          </div>
+          <p class="hint">To back up, copy that folder. Export in the ··· menu saves just the notes.</p>
+        }
+      </section>
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+      @if (settings(); as s) {
+        <p class="model">Answers come from {{ s.model }}.</p>
+      }
+    </div>
+  }
+</dialog>

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
+using TerminalHelper.Api.Storage;
 
 namespace TerminalHelper.Api.Assistant;
 
@@ -11,9 +12,9 @@ public static class AssistantEndpoints
     {
         var api = app.MapGroup("/api");
 
-        api.MapGet("/health", (IOptions<AssistantOptions> options) => new HealthResponse(
+        api.MapGet("/health", (IOptions<AssistantOptions> options, ApiKeyStore keys) => new HealthResponse(
             Model: options.Value.Model,
-            Credentials: HasCredentials(options.Value)));
+            Credentials: keys.Current.Key is not null || HasOtherCredentials()));
 
         api.MapPost("/ask", Results<ServerSentEventsResult<string>, ValidationProblem> (
             AskRequest request, ClaudeAssistant assistant, HttpContext http) =>
@@ -36,13 +37,11 @@ public static class AssistantEndpoints
     }
 
     /// <summary>
-    /// A hint for the UI so it can show setup instructions up front. The SDK can also pick up an
-    /// <c>ant auth login</c> profile, which lives under ~/.config/anthropic.
+    /// Besides an API key, the SDK can use an auth token or an <c>ant auth login</c> profile
+    /// (under ~/.config/anthropic). Only a hint for the UI's "add your key" prompt.
     /// </summary>
-    static bool HasCredentials(AssistantOptions options) =>
-        !string.IsNullOrWhiteSpace(options.ApiKey)
-        || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"))
-        || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN"))
+    static bool HasOtherCredentials() =>
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN"))
         || Directory.Exists(Environment.GetEnvironmentVariable("ANTHROPIC_CONFIG_DIR")
             ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "anthropic"));
 
