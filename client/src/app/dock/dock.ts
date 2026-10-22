@@ -10,7 +10,7 @@ import {
 import { AskStore } from '../core/ask-store';
 import { ServerStatus } from '../core/server-status';
 import { Settings } from '../core/settings';
-import { ApiKeyForm } from '../ui/api-key-form';
+import { SettingsDialogState } from '../topbar/settings-dialog';
 import { Icon } from '../ui/icon';
 import { EnvMenu } from './env-menu';
 import { TurnView } from './turn';
@@ -18,7 +18,7 @@ import { TurnView } from './turn';
 /** The docked panel under the board: the conversation and the question box. */
 @Component({
   selector: 'app-dock',
-  imports: [ApiKeyForm, EnvMenu, Icon, TurnView],
+  imports: [EnvMenu, Icon, TurnView],
   templateUrl: './dock.html',
   styleUrl: './dock.css',
 })
@@ -26,6 +26,7 @@ export class Dock {
   protected readonly ask = inject(AskStore);
   protected readonly settings = inject(Settings);
   protected readonly status = inject(ServerStatus);
+  protected readonly settingsDialog = inject(SettingsDialogState);
   private readonly input = viewChild.required<ElementRef<HTMLTextAreaElement>>('input');
   private readonly thread = viewChild.required<ElementRef<HTMLElement>>('thread');
 
@@ -42,15 +43,15 @@ export class Dock {
   private followAnswer = true;
 
   constructor() {
-    // Checked on load and after every answer. While something is wrong (API down, no key) it keeps
-    // checking, so the banner goes away by itself once the server is fixed and restarted.
+    // Checked on load and after every answer. While something is wrong (server down, no provider set up)
+    // it keeps checking, so the banner goes away by itself once that's fixed.
     effect((onCleanup) => {
       if (this.ask.busy()) return;
       let stopped = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
       const check = async () => {
         const health = await this.status.refresh();
-        if (!stopped && !health?.credentials) timer = setTimeout(check, 4000);
+        if (!stopped && !health?.ready) timer = setTimeout(check, 4000);
       };
       void check();
       onCleanup(() => {

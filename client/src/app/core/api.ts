@@ -18,8 +18,11 @@ export interface ExplainBody {
 }
 
 export interface Health {
+  /** The provider that answers: anthropic, openai or local. */
+  provider: string;
   model: string;
-  credentials: boolean;
+  /** False until that provider has what it needs (a key, a model, a server). */
+  ready: boolean;
 }
 
 export class ApiError extends Error {
@@ -35,6 +38,8 @@ export interface StreamResult<T> {
   value: T;
   raw: string;
   stopReason: string | null;
+  /** The model that answered, e.g. claude-haiku-5-5 or gpt-5.4-mini. */
+  model: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,7 +88,12 @@ export class AssistantApi {
           flush();
         } else if (event.event === 'done') {
           flush.cancel();
-          return { value: map(parseFinal(raw)), raw, stopReason: (data['stopReason'] as string) ?? null };
+          return {
+            value: map(parseFinal(raw)),
+            raw,
+            stopReason: (data['stopReason'] as string) ?? null,
+            model: (data['model'] as string) ?? '',
+          };
         } else if (event.event === 'error') {
           throw new ApiError(data['message'] as string, data['code'] as string);
         }

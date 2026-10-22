@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using TerminalHelper.Api.Assistant;
+using TerminalHelper.Api.Providers;
 
 namespace TerminalHelper.Api.Tests;
 
@@ -84,7 +84,7 @@ public sealed class FakeAnthropic : HttpMessageHandler
     public IClaudeClientFactory ClientFactory() => new Factory(this);
 }
 
-/// <summary>The app wired to a fake Anthropic and its own empty data folder.</summary>
+/// <summary>The app wired to fake AI providers and its own empty data folder.</summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
     readonly Dictionary<string, string?> _settings;
@@ -95,9 +95,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         _settings = new(settings ?? []) { ["Storage:DataDir"] = DataDir };
         // Tests must not pick up a key exported in the developer's shell.
         _settings.TryAdd("ANTHROPIC_API_KEY", "");
+        _settings.TryAdd("OPENAI_API_KEY", "");
     }
 
     public FakeAnthropic Upstream { get; } = new();
+
+    public FakeOpenAi OpenAi { get; } = new();
 
     public string DataDir { get; }
 
@@ -105,7 +108,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         foreach (var (key, value) in _settings) builder.UseSetting(key, value);
-        builder.ConfigureTestServices(services => services.AddSingleton(Upstream.ClientFactory()));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton(Upstream.ClientFactory());
+            services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => OpenAi);
+        });
     }
 
     protected override void Dispose(bool disposing)

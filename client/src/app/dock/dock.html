@@ -8,15 +8,15 @@
           (or <code>./dev.sh</code> when developing); this clears once it's up.
         </span>
       </div>
-    } @else if (status.health()?.credentials === false) {
-      <div class="banner key" role="region" aria-label="Add your API key">
-        <p class="key-title"><app-icon name="key" [size]="14" /> Add your Anthropic API key to start asking.</p>
-        <app-api-key-form (saved)="focusInput()" />
-        <p class="key-hint">
-          Create one in the
-          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>
-          under API keys. It's saved on this computer only.
-        </p>
+    } @else if (status.health()?.ready === false) {
+      <div class="banner connect" role="region" aria-label="Connect an AI provider">
+        <p class="connect-title"><app-icon name="key" [size]="14" /> Connect an AI to start asking.</p>
+        <div class="connect-options">
+          <button class="btn outline small" type="button" (click)="settingsDialog.open('anthropic')">Claude</button>
+          <button class="btn outline small" type="button" (click)="settingsDialog.open('openai')">OpenAI</button>
+          <button class="btn outline small" type="button" (click)="settingsDialog.open('local')">Local model</button>
+        </div>
+        <p class="connect-hint">Use your own Anthropic or OpenAI API key, or a model running on this computer (Ollama, LM Studio).</p>
       </div>
     }
 
@@ -68,6 +68,11 @@
         Verbose
       </label>
       <span class="grow"></span>
+      @if (status.health(); as health) {
+        <button class="model" type="button" title="The AI that answers. Change it in Settings." (click)="settingsDialog.open()">
+          {{ health.model || 'no model' }}
+        </button>
+      }
       @if (ask.turns().length) {
         <button class="btn small" type="button" title="Clear the conversation" (click)="ask.clear()">Clear</button>
       }

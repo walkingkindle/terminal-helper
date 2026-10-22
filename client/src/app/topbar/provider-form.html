@@ -1,0 +1,95 @@
+@let p = provider();
+<form (submit)="$event.preventDefault(); save()">
+  <div class="row">
+    <label class="label" [for]="p.id + '-key'">API key</label>
+    <div class="field">
+      @if (p.apiKey.set && p.apiKey.source) {
+        <p class="current">
+          Using the key ending in <code>{{ p.apiKey.hint }}</code>, {{ keySources[p.apiKey.source] }}.
+          @if (p.apiKey.source === 'saved') {
+            <button class="link" type="button" (click)="removeKey()">Remove it</button>
+          }
+        </p>
+      }
+      <input
+        class="input mono"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        [id]="p.id + '-key'"
+        [placeholder]="keyPlaceholder()"
+        [value]="apiKey()"
+        (input)="apiKey.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  @if (p.editableBaseUrl) {
+    <div class="row">
+      <label class="label" [for]="p.id + '-url'">Server</label>
+      <div class="field">
+        <input
+          class="input mono"
+          spellcheck="false"
+          placeholder="http://localhost:11434/v1"
+          [id]="p.id + '-url'"
+          [value]="baseUrl()"
+          (input)="baseUrl.set($any($event.target).value)"
+        />
+        @if (server(); as s) {
+          <p class="server" [class.bad]="!s.ok">{{ s.text }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="row">
+    <label class="label" [for]="p.id + '-model'">Model</label>
+    <div class="field">
+      <input
+        class="input mono"
+        spellcheck="false"
+        [attr.list]="p.id + '-models'"
+        [id]="p.id + '-model'"
+        [placeholder]="p.id === 'local' ? 'e.g. qwen2.5-coder:7b' : ''"
+        [value]="model()"
+        (input)="model.set($any($event.target).value)"
+      />
+      <datalist [id]="p.id + '-models'">
+        @for (m of suggestions(); track m) {
+          <option [value]="m"></option>
+        }
+      </datalist>
+    </div>
+  </div>
+
+  <div class="actions">
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    <button class="btn primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Checking…' : p.active ? 'Save' : 'Save and use' }}
+    </button>
+  </div>
+</form>
+
+<p class="hint">
+  @switch (p.id) {
+    @case ('anthropic') {
+      Create a key in the
+      <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>
+      under API keys. Haiku is the fastest and cheapest; Sonnet and Opus know more and cost more.
+    }
+    @case ('openai') {
+      Create a key on
+      <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.
+      gpt-5.4-mini is quick; gpt-5.4-nano is the cheapest.
+    }
+    @case ('local') {
+      Free and private: the model runs on this computer. Works with Ollama, LM Studio, llama.cpp and other servers
+      that speak OpenAI's chat API with JSON-schema output. With
+      <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>: <code>ollama pull qwen2.5-coder</code>,
+      and it serves at the address above. Small models know fewer flags than the cloud ones.
+    }
+  }
+</p>

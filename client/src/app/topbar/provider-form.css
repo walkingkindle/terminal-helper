@@ -1,0 +1,84 @@
+form {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: start;
+  gap: 10px;
+}
+
+.label {
+  padding-top: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.field {
+  min-width: 0;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.current {
+  margin: 0 0 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 30px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.server {
+  margin: 5px 0 0;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.server.bad {
+  color: var(--danger);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.error {
+  flex: 1;
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.hint {
+  margin: 10px 0 0;
+  color: var(--text-3);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.hint a {
+  color: inherit;
+  text-underline-offset: 3px;
+}

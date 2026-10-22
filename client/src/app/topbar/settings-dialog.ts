@@ -1,17 +1,19 @@
-import { afterRenderEffect, Component, effect, ElementRef, inject, Injectable, signal, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, computed, effect, ElementRef, inject, Injectable, signal, viewChild } from '@angular/core';
 import { ApiError } from '../core/api';
-import { AppSettings, KeyState, LocalApi } from '../core/local-api';
-import { ServerStatus } from '../core/server-status';
+import { AppSettings, LocalApi, ProviderId } from '../core/local-api';
 import { Toasts } from '../core/toasts';
 import { copyText } from '../core/util';
-import { ApiKeyForm } from '../ui/api-key-form';
 import { Icon } from '../ui/icon';
+import { ProviderForm } from './provider-form';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsDialogState {
   readonly isOpen = signal(false);
+  /** The provider tab to show first; otherwise the one in use. */
+  readonly provider = signal<ProviderId | null>(null);
 
-  open() {
+  open(provider: ProviderId | null = null) {
+    this.provider.set(provider);
     this.isOpen.set(true);
   }
 
@@ -20,34 +22,31 @@ export class SettingsDialogState {
   }
 }
 
-const KEY_SOURCES: Record<NonNullable<KeyState['source']>, string> = {
-  saved: 'saved on this computer',
-  config: "from the app's configuration (appsettings or user-secrets)",
-  environment: 'from the ANTHROPIC_API_KEY environment variable',
-};
+const TAB_NAMES: Record<ProviderId, string> = { anthropic: 'Claude', openai: 'OpenAI', local: 'Local model' };
 
-/** The API key and where the data lives. */
+/** Which AI answers (and with which key), and where the data lives. */
 @Component({
   selector: 'app-settings-dialog',
-  imports: [ApiKeyForm, Icon],
+  imports: [Icon, ProviderForm],
   templateUrl: './settings-dialog.html',
   styleUrl: './settings-dialog.css',
 })
 export class SettingsDialog {
   protected readonly state = inject(SettingsDialogState);
   private readonly api = inject(LocalApi);
-  private readonly status = inject(ServerStatus);
   private readonly toasts = inject(Toasts);
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
 
   protected readonly settings = signal<AppSettings | null>(null);
   protected readonly error = signal('');
-  protected readonly sources = KEY_SOURCES;
+  protected readonly tabNames = TAB_NAMES;
+  protected readonly tab = signal<ProviderId>('anthropic');
+  protected readonly selected = computed(() => this.settings()?.providers.find((p) => p.id === this.tab()));
   private pointerDownOnBackdrop = false;
 
   constructor() {
     effect(() => {
-      if (this.state.isOpen()) void this.reload();
+      if (this.state.isOpen()) void this.reload(true);
     });
     afterRenderEffect(() => {
       const dialog = this.dialog().nativeElement;
@@ -56,22 +55,14 @@ export class SettingsDialog {
     });
   }
 
-  protected async reload() {
+  protected async reload(opening = false) {
     try {
-      this.settings.set(await this.api.settings());
+      const settings = await this.api.settings();
+      this.settings.set(settings);
+      if (opening) this.tab.set(this.state.provider() ?? settings.active);
       this.error.set('');
     } catch (error) {
       this.error.set(error instanceof ApiError ? error.message : "Couldn't load the settings.");
-    }
-  }
-
-  protected async removeKey() {
-    try {
-      await this.api.removeApiKey();
-      this.toasts.show('Saved key removed');
-      await Promise.all([this.reload(), this.status.refresh()]);
-    } catch (error) {
-      this.error.set(error instanceof ApiError ? error.message : "Couldn't remove the key.");
     }
   }
 

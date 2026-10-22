@@ -2,9 +2,9 @@
 # Terminal Helper as a desktop app. Builds itself the first time, starts a private server on this computer
 # and opens it in its own window. Close the window to quit.
 #
-#   ./terminal-helper.sh                    start; the window asks for your Anthropic API key the first time
-#   ./terminal-helper.sh --api-key          paste the key at a hidden prompt; it's saved for next time
-#   ./terminal-helper.sh --api-key sk-ant…  the same, but the key ends up in your shell history
+#   ./terminal-helper.sh                    start; the first time, pick Claude, OpenAI or a local model in the window
+#   ./terminal-helper.sh --api-key          paste an Anthropic or OpenAI key at a hidden prompt; it's saved
+#   ./terminal-helper.sh --api-key sk-…     the same, but the key ends up in your shell history
 #   ./terminal-helper.sh --browser          use a normal browser tab instead of an app window
 #   ./terminal-helper.sh --port 4978        if port 4977 is taken
 #   ./terminal-helper.sh --rebuild          build again even if nothing changed
@@ -50,7 +50,7 @@ while (($#)); do
 done
 [[ $port =~ ^[0-9]+$ ]] || die "--port needs a number."
 if ((ask_key)); then
-  read -rsp "Paste your Anthropic API key (it won't show): " key < /dev/tty
+  read -rsp "Paste your Anthropic or OpenAI API key (it won't show): " key < /dev/tty
   echo
 fi
 command -v curl > /dev/null || die "Needs curl."
@@ -97,14 +97,16 @@ running() { curl -sf -o /dev/null --max-time 2 "$url/api/health"; }
 
 save_key() {
   [[ -n $key ]] || return 0
-  [[ $key =~ ^[A-Za-z0-9_-]+$ ]] || die "That doesn't look like an Anthropic API key."
+  [[ $key =~ ^[A-Za-z0-9_-]+$ ]] || die "That doesn't look like an API key."
+  # Anthropic keys start with sk-ant-; anything else is taken for an OpenAI key.
+  local provider=openai name=OpenAI status
+  [[ $key == sk-ant-* ]] && { provider=anthropic; name=Claude; }
   # Through stdin, so the key doesn't show up in the process list.
-  local status
   status=$(printf '{"apiKey":"%s"}' "$key" | curl -s -o /dev/null -w '%{http_code}' -X PUT \
-    -H 'Content-Type: application/json' --data-binary @- "$url/api/settings/api-key")
+    -H 'Content-Type: application/json' --data-binary @- "$url/api/settings/providers/$provider")
   case $status in
-    200) echo "API key saved." ;;
-    422) echo "Anthropic didn't accept that key; the window will ask for another one." >&2 ;;
+    200) echo "$name API key saved; answers now come from $name." ;;
+    422) echo "$name didn't accept that key; pick a provider in the window instead." >&2 ;;
     *) echo "Couldn't save the API key (HTTP $status)." >&2 ;;
   esac
 }

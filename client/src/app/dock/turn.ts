@@ -4,6 +4,7 @@ import { BoardStore } from '../core/board-store';
 import { CommandItem, Explanation } from '../core/models';
 import { Toasts } from '../core/toasts';
 import { copyText } from '../core/util';
+import { SettingsDialogState } from '../topbar/settings-dialog';
 import { CommandCode } from '../ui/command-code';
 import { Icon } from '../ui/icon';
 
@@ -18,6 +19,7 @@ export class TurnView {
   readonly turn = input.required<Turn>();
 
   protected readonly ask = inject(AskStore);
+  protected readonly settingsDialog = inject(SettingsDialogState);
   private readonly board = inject(BoardStore);
   private readonly toasts = inject(Toasts);
 

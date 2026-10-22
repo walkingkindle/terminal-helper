@@ -1,19 +1,48 @@
 import { Injectable } from '@angular/core';
 import { ApiError } from './api';
 
+export type ProviderId = 'anthropic' | 'openai' | 'local';
+
 export interface KeyState {
   set: boolean;
   /** The last four characters, e.g. "…3fQx". */
   hint: string | null;
   source: 'saved' | 'config' | 'environment' | null;
-  /** After a save: false when Anthropic couldn't be reached to check the key. */
-  verified?: boolean | null;
+}
+
+/** One AI provider as Settings shows it. */
+export interface ProviderState {
+  id: ProviderId;
+  name: string;
+  /** The one that answers questions. */
+  active: boolean;
+  /** Has what it needs: a key, a model, a server. */
+  ready: boolean;
+  model: string;
+  baseUrl: string | null;
+  requiresKey: boolean;
+  editableBaseUrl: boolean;
+  apiKey: KeyState;
 }
 
 export interface AppSettings {
-  model: string;
-  apiKey: KeyState;
+  active: ProviderId;
+  providers: ProviderState[];
   dataDir: string;
+}
+
+/** Leave a field out to keep what's saved. */
+export interface ProviderUpdate {
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+}
+
+export interface ProviderSaved {
+  provider: ProviderState;
+  /** False when the provider couldn't be reached to check the key. */
+  verified: boolean;
+  models: string[];
 }
 
 export interface StoredBoard {
@@ -23,7 +52,7 @@ export interface StoredBoard {
 
 export type SaveOutcome = { saved: true; revision: number } | { saved: false; board: StoredBoard };
 
-/** The server's own storage: the board in notes.json and the API key, both in the data folder. */
+/** The server's own storage: the board in notes.json, and the AI provider settings, both in the data folder. */
 @Injectable({ providedIn: 'root' })
 export class LocalApi {
   async board(): Promise<StoredBoard> {
@@ -41,12 +70,19 @@ export class LocalApi {
     return (await send('GET', '/api/settings')).json() as Promise<AppSettings>;
   }
 
-  async saveApiKey(apiKey: string): Promise<KeyState> {
-    return (await send('PUT', '/api/settings/api-key', JSON.stringify({ apiKey }))).json() as Promise<KeyState>;
+  /** Checks the values with the provider, saves them and makes it the one that answers. */
+  async saveProvider(id: ProviderId, update: ProviderUpdate): Promise<ProviderSaved> {
+    return (await send('PUT', `/api/settings/providers/${id}`, JSON.stringify(update))).json() as Promise<ProviderSaved>;
   }
 
-  async removeApiKey(): Promise<KeyState> {
-    return (await send('DELETE', '/api/settings/api-key')).json() as Promise<KeyState>;
+  async removeKey(id: ProviderId): Promise<ProviderState> {
+    return (await send('DELETE', `/api/settings/providers/${id}/api-key`)).json() as Promise<ProviderState>;
+  }
+
+  /** What models a server offers, for the model picker. Saves nothing. */
+  async models(id: ProviderId, probe: ProviderUpdate): Promise<string[]> {
+    const response = await send('POST', `/api/settings/providers/${id}/models`, JSON.stringify(probe));
+    return ((await response.json()) as { models: string[] }).models;
   }
 }
 

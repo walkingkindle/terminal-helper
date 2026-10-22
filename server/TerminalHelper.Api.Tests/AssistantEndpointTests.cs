@@ -8,7 +8,8 @@ public sealed class AssistantEndpointTests : IDisposable
 {
     static readonly object Arch = new { os = "Linux", distro = "Arch Linux", shell = "bash" };
 
-    readonly ApiFactory _factory = new();
+    // Claude answers only with a key; these tests are about everything after that.
+    readonly ApiFactory _factory = new(new() { ["Anthropic:ApiKey"] = "sk-ant-test-key-0000" });
     readonly HttpClient _http;
 
     public AssistantEndpointTests() => _http = _factory.CreateClient();

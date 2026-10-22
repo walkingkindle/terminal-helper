@@ -1,7 +1,7 @@
 <div class="q">
   <span class="prompt" aria-hidden="true">›</span>
   <span class="q-text">{{ turn().question }}</span>
-  <span class="q-meta">{{ turn().env }}@if (turn().verbose) { · verbose}</span>
+  <span class="q-meta">{{ turn().env }}@if (turn().verbose) { · verbose}@if (turn().model) { · {{ turn().model }}}</span>
 </div>
 
 <div class="a">
@@ -92,6 +92,11 @@
       <div class="error-box" role="alert">
         <app-icon name="alert" [size]="14" />
         <span>{{ turn().error }}</span>
+        @if (turn().errorCode === 'auth' || turn().errorCode === 'setup') {
+          <button class="btn small outline" type="button" (click)="settingsDialog.open()">
+            <app-icon name="settings" [size]="13" /> Settings
+          </button>
+        }
         <button class="btn small outline" type="button" (click)="ask.retry(turn().id)">
           <app-icon name="retry" [size]="13" /> Retry
         </button>

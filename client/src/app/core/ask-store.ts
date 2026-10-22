@@ -28,7 +28,11 @@ export interface Turn {
   raw: string;
   answer: Answer;
   stopReason: string | null;
+  /** The model that answered. */
+  model: string;
   error: string;
+  /** Why it failed: auth and setup mean Settings needs a look. */
+  errorCode: string;
   /** On-demand breakdowns, keyed by command index. */
   explains: Partial<Record<number, ExplainState>>;
 }
@@ -73,7 +77,9 @@ export class AskStore {
       raw: '',
       answer: EMPTY_ANSWER,
       stopReason: null,
+      model: '',
       error: '',
+      errorCode: '',
       explains: {},
     };
     const history = this.historyBefore(this.turns().length);
@@ -92,7 +98,9 @@ export class AskStore {
       raw: '',
       answer: EMPTY_ANSWER,
       stopReason: null,
+      model: '',
       error: '',
+      errorCode: '',
       explains: {},
     };
     this.patch(id, turn);
@@ -173,11 +181,14 @@ export class AskStore {
         answer: result.value,
         raw: result.raw,
         stopReason: result.stopReason,
+        model: result.model,
       });
     } catch (error) {
       this.patch(
         turn.id,
-        controller.signal.aborted ? { status: 'stopped' } : { status: 'error', error: messageOf(error) },
+        controller.signal.aborted
+          ? { status: 'stopped' }
+          : { status: 'error', error: messageOf(error), errorCode: error instanceof ApiError ? error.code : '' },
       );
     } finally {
       if (this.current === controller) this.current = null;
@@ -208,6 +219,8 @@ function loadThread(): Turn[] {
   // A reload cuts off whatever was streaming.
   return turns.map((t) => ({
     ...t,
+    model: t.model ?? '',
+    errorCode: t.errorCode ?? '',
     status: t.status === 'streaming' ? 'stopped' : t.status,
     explains: Object.fromEntries(Object.entries(t.explains ?? {}).filter(([, e]) => e?.status === 'done')),
   }));

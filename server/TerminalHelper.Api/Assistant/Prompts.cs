@@ -78,7 +78,10 @@ public static class Prompts
     }
 }
 
-/// <summary>JSON schemas for structured output. Property order is generation order, so the command streams first.</summary>
+/// <summary>
+/// JSON schemas for structured output, written to suit every provider (OpenAI's strict mode included: every
+/// property required, no extras). Property order is generation order, so the command streams first.
+/// </summary>
 public static class Schemas
 {
     const string Parts = """
@@ -93,7 +96,7 @@ public static class Schemas
         }
         """;
 
-    public static readonly Dictionary<string, JsonElement> Answer = Parse($$"""
+    public static readonly JsonElement Answer = Parse($$"""
         {
           "type": "object",
           "properties": {
@@ -120,7 +123,7 @@ public static class Schemas
         }
         """);
 
-    public static readonly Dictionary<string, JsonElement> Explanation = Parse($$"""
+    public static readonly JsonElement Explanation = Parse($$"""
         {
           "type": "object",
           "properties": {
@@ -132,6 +135,5 @@ public static class Schemas
         }
         """);
 
-    static Dictionary<string, JsonElement> Parse(string json) =>
-        JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!;
+    static JsonElement Parse(string json) => JsonDocument.Parse(json).RootElement.Clone();
 }

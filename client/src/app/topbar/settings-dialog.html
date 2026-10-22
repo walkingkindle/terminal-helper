@@ -14,45 +14,44 @@
         </button>
       </header>
 
-      <section>
-        <h3><app-icon name="key" [size]="15" /> Anthropic API key</h3>
-        @if (settings(); as s) {
-          <p class="current">
-            @if (s.apiKey.set && s.apiKey.source) {
-              Using the key ending in <code>{{ s.apiKey.hint }}</code>, {{ sources[s.apiKey.source] }}.
-              @if (s.apiKey.source === 'saved') {
-                <button class="link" type="button" (click)="removeKey()">Remove it</button>
-              }
-            } @else {
-              No key yet. Questions need one.
+      @if (settings(); as s) {
+        <section>
+          <h3><app-icon name="key" [size]="15" /> AI provider</h3>
+          <p class="current">Answers come from whichever one is in use. Each keeps its own key and model.</p>
+          <div class="tabs" role="tablist" aria-label="AI provider">
+            @for (p of s.providers; track p.id) {
+              <button
+                type="button"
+                role="tab"
+                [class.on]="tab() === p.id"
+                [attr.aria-selected]="tab() === p.id"
+                (click)="tab.set(p.id)"
+              >
+                {{ tabNames[p.id] }}
+                @if (p.active) {
+                  <span class="in-use" [class.not-ready]="!p.ready">in use</span>
+                }
+              </button>
             }
-          </p>
-        }
-        <app-api-key-form (saved)="reload()" />
-        <p class="hint">
-          Create one in the
-          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>
-          under API keys. A key saved here stays on this computer and is used before ANTHROPIC_API_KEY.
-        </p>
-      </section>
+          </div>
+          @if (selected(); as p) {
+            <app-provider-form [provider]="p" (saved)="reload()" />
+          }
+        </section>
 
-      <section>
-        <h3><app-icon name="folder" [size]="15" /> Your data</h3>
-        @if (settings(); as s) {
-          <p class="current">Your notes and the saved key live in</p>
+        <section>
+          <h3><app-icon name="folder" [size]="15" /> Your data</h3>
+          <p class="current">Your notes and settings live in</p>
           <div class="path">
             <code>{{ s.dataDir }}</code>
             <button class="btn small" type="button" (click)="copyPath(s.dataDir)">Copy</button>
           </div>
           <p class="hint">To back up, copy that folder. Export in the ··· menu saves just the notes.</p>
-        }
-      </section>
+        </section>
+      }
 
       @if (error()) {
         <p class="error" role="alert">{{ error() }}</p>
-      }
-      @if (settings(); as s) {
-        <p class="model">Answers come from {{ s.model }}.</p>
       }
     </div>
   }
